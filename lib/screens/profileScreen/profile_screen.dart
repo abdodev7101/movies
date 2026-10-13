@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:movie_app/auth/Login/login_screen.dart';
 import 'package:movie_app/generated/assets.dart';
+import 'package:movie_app/screens/HomeScreen/Home_wedgit/home_card.dart';
+import 'package:movie_app/screens/MovieDetailsScreen/movie_details_screen.dart';
 import 'package:movie_app/screens/profileScreen/EditProfileScreen/edit_profile_screen.dart';
 import 'package:movie_app/screens/profileScreen/TabBar/custom_tab_bar.dart';
 import 'package:movie_app/screens/profileScreen/cubit/profile_cubit.dart';
@@ -26,7 +28,7 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.symmetric(horizontal: 2),
                     width: double.infinity,
                     color: AppColors.Grey,
                     child: Column(
@@ -44,7 +46,7 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                                 Text(
                                   cubit.userModel?.name ?? 'Demo',
-                                  style: AppStyles.BoldWhite24.copyWith(
+                                  style: AppStyles.BoldWhite20.copyWith(
                                     color: AppColors.White,
                                   ),
                                 ),
@@ -53,13 +55,15 @@ class ProfileScreen extends StatelessWidget {
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text("Wish List", style: AppStyles.BoldWhite24),
+                                Text("${cubit.wishList.length}", style: AppStyles.BoldWhite24),
+                                Text("Watch List", style: AppStyles.BoldWhite24),
                               ],
                             ),
 
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                Text("${cubit.historyList.length}", style: AppStyles.BoldWhite24),
                                 Text("History", style: AppStyles.BoldWhite24),
                               ],
                             ),
@@ -131,9 +135,69 @@ class ProfileScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        cubit.wishList.isEmpty
+                            ? Center(
+                          child: Image.asset(Assets.images1.popcorn.path, width: 120),
+                        )
+                            : Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            itemCount: cubit.wishList.length,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 0.65,
+                            ),
+                            itemBuilder: (context, index) {
+                              return HomeCard(
+                                moviesmodel: cubit.wishList[index],
+                                onTap: () {
+                                  Utils.navigateTo(
+                                    MovieDetailsScreen(movieId: cubit.wishList[index].id?.toInt() ?? 0),
+                                    context,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
 
-                  SizedBox(height: 100),
-                  Image.asset(Assets.images1.popcorn.path),
+                        cubit.historyList.isEmpty
+                            ? Center(
+                          child: Image.asset(Assets.images1.popcorn.path, width: 120),
+                        )
+                            : Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            itemCount: cubit.historyList.length,
+                            gridDelegate:  SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 0.65,
+                            ),
+                            itemBuilder: (context, index) {
+                              return HomeCard(
+                                moviesmodel: cubit.historyList[index],
+                                onTap: () {
+                                  Utils.navigateTo(
+                                    MovieDetailsScreen(movieId: cubit.historyList[index].id?.toInt() ?? 0),
+                                    context,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

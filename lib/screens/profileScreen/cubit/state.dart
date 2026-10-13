@@ -24,3 +24,5 @@ class SignOutErrorState extends ProfileState {
   final String error;
   SignOutErrorState(this.error);
 }
+class WishListChangedState extends ProfileState {}
+class HistoryChangedState extends ProfileState {}

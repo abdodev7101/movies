@@ -10,6 +10,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
   static MovieDetailsCubit get(context) => BlocProvider.of(context);
   Movies? movieDetails;
   List<Movies> similarMovies = [];
+  bool isSelected = false;
 
   Future<void> getMovieDetails(num movieId) async {
     emit(MovieDetailsLoadingState());

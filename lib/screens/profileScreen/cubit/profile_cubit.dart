@@ -6,12 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:movie_app/generated/assets.dart';
 import 'package:movie_app/screens/profileScreen/cubit/state.dart';
+import 'package:movie_app/utiles/models/MoviesModels/movies_model.dart';
 import 'package:movie_app/utiles/models/user_model.dart';
 import 'package:movie_app/utiles/remote/end_points.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
-  ProfileCubit() : super(ProfileInitialState());
+  ProfileCubit() : super(ProfileInitialState()) {
+    loadListsFromPrefs();
+  }
+
   static ProfileCubit get(context) => BlocProvider.of<ProfileCubit>(context);
 
   var db = FirebaseFirestore.instance;
@@ -90,7 +94,6 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       if (user != null) {
         await db.collection(EndPoints.userCollection).doc(user.uid).delete();
-
         await user.delete();
 
         final prefs = await SharedPreferences.getInstance();
@@ -98,7 +101,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
         emit(DeleteUserSuccessState());
       }
-    }  catch (e) {
+    } catch (e) {
       emit(DeleteUserErrorState(e.toString()));
     }
   }
@@ -107,11 +110,63 @@ class ProfileCubit extends Cubit<ProfileState> {
     emit(SignOutLoadingState());
     try {
       await FirebaseAuth.instance.signOut();
-
       emit(SignOutSuccessState());
     } catch (e) {
       emit(SignOutErrorState(e.toString()));
     }
   }
 
+  List<Movies> wishList = [];
+
+  List<Movies> historyList = [];
+
+  bool isSaved(Movies movie) {
+    return wishList.any((element) => element.id == movie.id);
+  }
+
+  void toggleWish(Movies movie) {
+    if (isSaved(movie)) {
+      wishList.removeWhere((element) => element.id == movie.id);
+    } else {
+      wishList.add(movie);
+    }
+    emit(WishListChangedState());
+    saveListsToPrefs();
+  }
+
+  void addToHistory(Movies movie) {
+    bool exists = historyList.any((element) => element.id == movie.id);
+    if (!exists) {
+      historyList.add(movie);
+      emit(HistoryChangedState());
+      saveListsToPrefs();
+    }
+  }
+
+  Future<void> saveListsToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String> wishJsonList = wishList.map((e) => jsonEncode(e.toJson())).toList();
+    List<String> historyJsonList = historyList.map((e) => jsonEncode(e.toJson())).toList();
+
+    await prefs.setStringList('saved_wish_list', wishJsonList);
+    await prefs.setStringList('saved_history_list', historyJsonList);
+  }
+
+  Future<void> loadListsFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String>? wishJsonList = prefs.getStringList('saved_wish_list');
+    List<String>? historyJsonList = prefs.getStringList('saved_history_list');
+
+    if (wishJsonList != null) {
+      wishList = wishJsonList.map((e) => Movies.fromJson(jsonDecode(e))).toList();
+    }
+
+    if (historyJsonList != null) {
+      historyList = historyJsonList.map((e) => Movies.fromJson(jsonDecode(e))).toList();
+    }
+
+    emit(ProfileInitialState());
+  }
 }
